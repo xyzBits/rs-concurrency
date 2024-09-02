@@ -19,7 +19,19 @@ impl Msg {
     }
 }
 
-/// Send 可以从一个线程移到另一个线程
+///
+/// pub fn spawn<F, T>(f: F) -> JoinHandle<T>
+/// where
+/// F: FnOnce() -> T,
+///  F: Send + 'static,
+///   T: Send + 'static,
+///
+///  F: FnOnce() -> T
+/// 这是一个 trait ，他是一个整体，证明 F 是一个闭包，只能运行一次的闭包
+///
+/// Send 可以从一个线程移到另一个线程，指类型，是指所有权
+/// 比如一个 String 你可以从一个线程中，move 到另一个线程里面
+/// 但是有些
 fn main() -> Result<()> {
     // 在不同的线程之间，可以使用 channel 来传送 message
     // 多生产者，单消费者的 channel
