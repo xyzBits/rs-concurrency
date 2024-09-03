@@ -56,8 +56,8 @@ fn main() -> Result<()> {
     });
 
     let secret = consumer
-    // 主线程和子线程在这里进行汇聚
-    // 不确定什么时候结束，因此需要 join 等待
+        // 主线程和子线程在这里进行汇聚
+        // 不确定什么时候结束，因此需要 join 等待
         .join()
         .map_err(|e| anyhow!("Thread join error: {:?}", e))?;
 
