@@ -4,7 +4,6 @@ pub struct Vector<T> {
     data: Vec<T>,
 }
 
-
 impl<T> Deref for Vector<T> {
     type Target = Vec<T>;
 
@@ -15,8 +14,6 @@ impl<T> Deref for Vector<T> {
 
 impl<T> Vector<T> {
     pub fn new(data: impl Into<Vec<T>>) -> Self {
-        Self {
-            data: data.into(),
-        }
+        Self { data: data.into() }
     }
 }
