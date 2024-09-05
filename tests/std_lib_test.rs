@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs::File;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
@@ -87,4 +88,13 @@ fn test_deref_2() {
     foo.split(" ").for_each(|s| println!("{s}"));
     // 如果没有 Deref 就需要写下面的这样的代码
     &(*foo)[..].split(" ").for_each(|s| println!("{s}"));
+}
+
+#[test]
+fn test_map_or_insert() {
+    let mut map = HashMap::new();
+    let value = map.entry("hello".to_string()).or_insert(0);
+    *value += 3;
+
+    println!("{:?}", map);
 }
