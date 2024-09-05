@@ -7,7 +7,7 @@ pub struct Vector<T> {
 
 pub fn dot_product<T>(a: Vector<T>, b: Vector<T>) -> Result<T>
 where
-    T: Copy + Default + Add<Output=T> + AddAssign + Mul<Output=T>,
+    T: Copy + Default + Add<Output = T> + AddAssign + Mul<Output = T>,
 {
     if a.len() != b.len() {
         return Err(anyhow!("Dot product error: a.len != b.len"));
