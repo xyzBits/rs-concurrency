@@ -15,21 +15,25 @@ pub struct Matrix<T> {
     col: usize,
 }
 
+/// 发送给子线程进行点积运算的 消息
 pub struct MsgInput<T> {
     idx: usize,
     row: Vector<T>,
     col: Vector<T>,
 }
-
+/// 子线程计算完后，将值进行返回的消息
 pub struct MsgOutput<T> {
     idx: usize,
     value: T,
 }
 
+///
 pub struct Msg<T> {
     input: MsgInput<T>,
 
     // sender to send the result back
+    // 这是子线程将结果发回来的 channel sender，主线程接收这个结果
+    // 计算出结果后，可以通过这个 sender 发回来给我
     sender: oneshot::Sender<MsgOutput<T>>,
 }
 
@@ -38,7 +42,7 @@ pub struct Msg<T> {
 /// `T` cannot be sent between threads safely
 pub fn multiply<T>(a: &Matrix<T>, b: &Matrix<T>) -> Result<Matrix<T>>
 where
-    T: Copy + Default + Add<Output = T> + Mul<Output = T> + AddAssign + Send + 'static,
+    T: Copy + Default + Add<Output = T> + Mul<Output = T> + AddAssign + Send + 'static, // 为能在 线程之间传送
 {
     if a.col != b.row {
         return Err(anyhow!("matrix multiply error: a.col != b.row"));
@@ -56,11 +60,17 @@ where
     //     }
     // }
 
+    // 先创建 4 个 thread ，接收消息并进行点积运算
+    // 每个 thread 都需要一个 channel，建立主线程 和 子线程的通信渠道
     let senders = (0..NUM_THREADS)
-        .map(|_| {
+        // _ignore 代表是第几个线程，不重要
+        .map(|_ignore| {
+            // sender 由主线程使用，发送消息
+            // receiver 在子线程中，接收消息，并进行点积运算
             let (sender, receiver) = mpsc::channel::<Msg<T>>();
 
             thread::spawn(move || {
+                // receiver 收到 message，对 message 的 input 进行点积运算
                 for msg in receiver {
                     let value = dot_product(msg.input.row, msg.input.col)?;
 
@@ -86,6 +96,7 @@ where
 
     for i in 0..a.row {
         for j in 0..b.col {
+            // 先拿出 row 和 col 然后进行 点积运算
             let row = Vector::new(&a.data[i * a.col..(i + 1) * a.col]);
             let col_data = b.data[j..]
                 .iter()
@@ -94,14 +105,21 @@ where
                 .collect::<Vec<_>>();
 
             let col = Vector::new(col_data);
+
             let idx = i * b.col + j;
+            // 用行和列生成消息
             let input = MsgInput::new(idx, row, col);
+
+            // 创建了一个 oneshot::Sender（一次性的），每个线程计算完后，可以返回一个 结果 ，通过 receiver.recv 结果
             let (sender, receiver) = oneshot::channel();
             let msg = Msg::new(input, sender);
 
+            // 发送的动作非常快，不用管他执行完
             if let Err(e) = senders[idx % NUM_THREADS].send(msg) {
                 eprintln!("Send error: {:?}", e);
             }
+
+            // 由 receiver 去收集结果
             receivers.push(receiver);
         }
     }
