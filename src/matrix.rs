@@ -35,9 +35,10 @@ pub struct Msg<T> {
 
 /// 为什么这里使用 引用，因为只是做乘法，读数据就可以了
 /// 为什么还要实现 copy 因为在做乘法时，可以直接拿来用，不用再解引用
+/// `T` cannot be sent between threads safely
 pub fn multiply<T>(a: &Matrix<T>, b: &Matrix<T>) -> Result<Matrix<T>>
 where
-    T: Copy + Default + Add<Output = T> + Mul<Output = T> + AddAssign,
+    T: Copy + Default + Add<Output = T> + Mul<Output = T> + AddAssign + Send + 'static,
 {
     if a.col != b.row {
         return Err(anyhow!("matrix multiply error: a.col != b.row"));
@@ -56,7 +57,7 @@ where
     // }
 
     let senders = (0..NUM_THREADS)
-        .map(|| {
+        .map(|_| {
             let (sender, receiver) = mpsc::channel::<Msg<T>>();
 
             thread::spawn(move || {
@@ -80,7 +81,7 @@ where
 
     // generate 4 threads which receive msg and do dot product
     let matrix_len = a.row * b.col;
-    let mut data = vec![T::default(), matrix_len];
+    let mut data = vec![T::default(); matrix_len];
     let mut receivers = Vec::with_capacity(matrix_len);
 
     for i in 0..a.row {
@@ -197,7 +198,8 @@ mod tests {
         let a = Matrix::new([1, 2, 3, 4, 5, 6], 2, 3);
         let b = Matrix::new([1, 2, 3, 4, 5, 6], 3, 2);
 
-        let c = multiply(&a, &b)?;
+        // let c = multiply(&a, &b)?;
+        let c = a * b;
 
         assert_eq!(c.col, 2);
         assert_eq!(c.row, 2);
@@ -213,7 +215,9 @@ mod tests {
         let a = Matrix::new([1, 2, 3, 4], 2, 2);
         let b = Matrix::new([1, 2, 3, 4], 2, 2);
 
-        let c = multiply(&a, &b)?;
+        // let c = multiply(&a, &b)?;
+
+        let c = a * b;
 
         assert_eq!(c.col, 2);
         assert_eq!(c.row, 2);
@@ -222,5 +226,22 @@ mod tests {
         assert_eq!(format!("{:?}", c), "Matrix(row=2, col=2, {7 10, 15 22})");
 
         Ok(())
+    }
+
+    #[test]
+    fn test_a_can_not_multiply_b() {
+        let a = Matrix::new([1, 2, 3, 4, 5, 6], 2, 3);
+        let b = Matrix::new([1, 2, 3, 4], 2, 2);
+        let c = multiply(&a, &b);
+        assert!(c.is_err())
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_a_can_not_multiply_b_panic() {
+        let a = Matrix::new([1, 2, 3, 4, 5, 6], 2, 3);
+        let b = Matrix::new([1, 2, 3, 4], 2, 2);
+
+        let _c = a * b;
     }
 }
