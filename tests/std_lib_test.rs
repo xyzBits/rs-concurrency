@@ -98,3 +98,16 @@ fn test_map_or_insert() {
 
     println!("{:?}", map);
 }
+
+fn stringify(x: u32) -> String {
+    format!("error code: {}", x)
+}
+
+#[test]
+fn test_result_map_err() {
+    let x: Result<u32, u32> = Ok(2);
+    assert_eq!(x.map_err(stringify), Ok(2));
+
+    let x: Result<u32, u32> = Err(13);
+    assert_eq!(x.map_err(stringify), Err("error code: 13".to_string()));
+}
