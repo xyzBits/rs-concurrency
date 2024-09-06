@@ -1,6 +1,6 @@
 use anyhow::Result;
 use rand::Rng;
-use rs_concurrency::Metrics;
+use rs_concurrency::ConcurrentMetrics;
 use std::thread;
 use std::time::Duration;
 
@@ -8,7 +8,7 @@ const N: usize = 2;
 const M: usize = 2;
 
 fn main() -> Result<()> {
-    let metrics = Metrics::new();
+    let metrics = ConcurrentMetrics::new();
 
     for idx in 0..N {
         task_worker(idx, metrics.clone())?; // Arc::clone(&metrics.data)
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     }
 }
 
-fn task_worker(idx: usize, metrics: Metrics) -> Result<()> {
+fn task_worker(idx: usize, metrics: ConcurrentMetrics) -> Result<()> {
     // 闭包可以有返回值
     thread::spawn(move || {
         loop {
@@ -41,7 +41,7 @@ fn task_worker(idx: usize, metrics: Metrics) -> Result<()> {
     Ok(())
 }
 
-fn request_worker(metrics: Metrics) -> Result<()> {
+fn request_worker(metrics: ConcurrentMetrics) -> Result<()> {
     thread::spawn(move || {
         loop {
             let mut rng = rand::thread_rng();

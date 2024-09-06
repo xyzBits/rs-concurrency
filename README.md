@@ -58,3 +58,15 @@ where
 3. 将重逻辑放在线程中处理
 
 oneshot: 是一种特殊类型的 channel，只允许发送一次消息，发送者发送一个消息后，就能再发送了，接收者接收到这个消息后，channel 就会关闭
+
+## 使用并发 HashMap 来实时收集统计信息
+- 需求：多线程下访问共享的 metrics table 
+- Arc<T> Mutex<T> RwLock<T> 
+- 构建 Arc<RwLock<HashMap<K, V>>> 版本
+- 介绍 DashMap 
+- 构建 DashMap<K, V> 版本
+- 对于原子类型，可以用 AtomicXxx
+- 构建 AtomicXxx 版本
+- 小结：对于共享内存的一般处理方式
+- 小结：进一步理解  Send / Sync 
+- 作业：阅读 fearless concurrency 

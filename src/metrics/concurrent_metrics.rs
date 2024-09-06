@@ -6,12 +6,12 @@ use std::sync::Arc;
 /// metrics 的数据结构
 /// 如果加了 clone ，clone后，就完全是一个新的 metrics
 #[derive(Debug, Clone)] // clone 是对 Arc 进行 clone
-pub struct Metrics {
+pub struct ConcurrentMetrics {
     // 锁相关的操作，全部被封装在 DashMap 的内部
     data: Arc<DashMap<String, i64>>,
 }
 
-impl Metrics {
+impl ConcurrentMetrics {
     pub fn new() -> Self {
         Self {
             data: Arc::new(DashMap::new()),
@@ -49,7 +49,7 @@ impl Metrics {
     // }
 }
 
-impl Display for Metrics {
+impl Display for ConcurrentMetrics {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for entry in self.data.iter() {
             writeln!(f, "{}: {}", entry.key(), entry.value())?;
