@@ -20,7 +20,7 @@ fn main() -> Result<()> {
 
     loop {
         thread::sleep(Duration::from_secs(5));
-        println!("{:?}", metrics.snapshot());
+        println!("{}", metrics);
     }
 }
 
