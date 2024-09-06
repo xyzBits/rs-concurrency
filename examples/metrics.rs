@@ -8,53 +8,53 @@ const N: usize = 2;
 const M: usize = 2;
 
 fn main() -> Result<()> {
-    let mut metrics = Metrics::new();
-
-    metrics.inc("req.page.1");
-    metrics.inc("call.thread.worker.1");
-
-    for i in 0..100 {
-        metrics.inc("req.page.1");
-        metrics.inc("req.page.2");
-
-        if i % 2 == 0 {
-            metrics.inc("req.page.3");
-        }
-    }
-
-    for _ignore in 0..50 {
-        metrics.dec("req.page.2");
-    }
+    let metrics = Metrics::new();
 
     for idx in 0..N {
-        task_worker(idx, metrics);
+        task_worker(idx, metrics.clone())?; // Arc::clone(&metrics.data)
     }
 
     for _ in 0..M {
-        request_worker(metrics);
+        request_worker(metrics.clone())?;
     }
 
-    println!("{:?}", metrics.snapshot());
+    loop {
+        thread::sleep(Duration::from_secs(5));
+        println!("{:?}", metrics.snapshot());
+    }
+}
+
+fn task_worker(idx: usize, metrics: Metrics) -> Result<()> {
+    // 闭包可以有返回值
+    thread::spawn(move || {
+        loop {
+            // do something
+            let mut rng = rand::thread_rng();
+            thread::sleep(Duration::from_millis(rng.gen_range(100..5_000)));
+            metrics.inc(format!("call.thread.worker.{}", idx))?;
+        }
+
+        #[allow(unreachable_code)]
+        Ok::<_, anyhow::Error>(())
+    });
 
     Ok(())
 }
 
-fn task_worker(idx: usize, mut metrics: Metrics) {
-    thread::spawn(move || loop {
-        // do something
-        let mut rng = rand::thread_rng();
-        thread::sleep(Duration::from_millis(rng.gen_range(100..5_000)));
-        metrics.inc(format!("call.thread.worker.{}", idx));
+fn request_worker(metrics: Metrics) -> Result<()> {
+    thread::spawn(move || {
+        loop {
+            let mut rng = rand::thread_rng();
+
+            thread::sleep(Duration::from_millis(rng.gen_range(50..800)));
+
+            let page = rng.gen_range(1..256);
+            metrics.inc(format!("req.page.{}", page)).unwrap();
+        }
+
+        #[allow(unreachable_code)]
+        Ok::<_, anyhow::Error>(())
     });
-}
 
-fn request_worker(mut metrics: Metrics) {
-    thread::spawn(move || loop {
-        let mut rng = rand::thread_rng();
-
-        thread::sleep(Duration::from_millis(rng.gen_range(50..800)));
-
-        let page = rng.gen_range(1..256);
-        metrics.inc(format!("req.page.{}", page));
-    });
+    Ok(())
 }

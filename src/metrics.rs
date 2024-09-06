@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 /// metrics 的数据结构
 /// 如果加了 clone ，clone后，就完全是一个新的 metrics
-#[derive(Debug)]
+#[derive(Debug, Clone)] // clone 是对 Arc 进行 clone
 pub struct Metrics {
     data: Arc<Mutex<HashMap<String, i64>>>,
 }
