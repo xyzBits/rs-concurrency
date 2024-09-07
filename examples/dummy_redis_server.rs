@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::io;
+use tokio::io::AsyncWriteExt;
 use tokio::net::{TcpListener, TcpStream};
 use tracing::{error, info};
 
@@ -28,7 +29,7 @@ async fn main() -> Result<()> {
     }
 }
 
-async fn process_redis_connection(stream: TcpStream) -> Result<()> {
+async fn process_redis_connection(mut stream: TcpStream) -> Result<()> {
     loop {
         // 如果不是 readable 就会一直等在这里，直到可以读
         stream.readable().await?;
@@ -41,6 +42,7 @@ async fn process_redis_connection(stream: TcpStream) -> Result<()> {
                 info!("read {} bytes", n);
                 let line = String::from_utf8_lossy(&buf);
                 info!("read line from connection: {:?}", line);
+                stream.write_all(b"OK\r\n").await?;
             }
 
             Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
