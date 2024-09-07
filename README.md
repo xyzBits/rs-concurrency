@@ -70,3 +70,40 @@ oneshot: 是一种特殊类型的 channel，只允许发送一次消息，发送
 - 小结：对于共享内存的一般处理方式
 - 小结：进一步理解  Send / Sync 
 - 作业：阅读 fearless concurrency 
+
+
+## 异步处理的基本概念
+- 什么是 Promise/Future
+- 为什么需要异步处理
+- Rust 为什么不直接提供运行时？
+- Tokio 做了什么
+- 探索异步处理的内部机制
+
+分布式系统的一个节点 ---> 进程    ---> 线程   ---> 协程 
+协程：运行在用户态下的
+
+Output: Future 结束的时候，返回什么
+
+```rust
+#[tokio::main]
+async fn main() {
+    
+}
+```
+
+执行步骤:
+1. 当你使用 .await 时，去运行 future，放入 run queue 
+2. 执行后，得到一个 pending，因为是系统  IO
+3. 将其放入 wait queue 
+4. 让 reactor 监听相关数据 
+5. reactor 拿到数据后，从 wait queue 唤醒，放入 run queue 
+6. executor 去 poll 
+
+为什么需要 Pin ，被 Pin 在当前的地址下，不能被移动 
+
+比如 堆上的一块内存，被栈上的一个变量 所 own，
+一般来说，你可以将这个所有权 move 到另一个栈上的变量，
+Pin 的意思就是说，你不可以移动
+
+每个线程下都有一个 scheduler
+如果自己的下面没有 任务，会去其他线程下面偷

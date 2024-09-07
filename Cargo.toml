@@ -8,3 +8,6 @@ anyhow = "1.0.81"
 rand = "0.8.5"
 oneshot = "0.1.6"
 dashmap = "5.5.3"
+tokio = { version = "1.37.0", features = ["rt", "rt-multi-thread", "macros", "net", "io-util"] }
+tracing = "0.1.40"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
